@@ -116,11 +116,9 @@ function fillGrades() {
   }
 
   function getClipboardContent() {
-    const permissionGranted = checkClilpboardPermission() // true or false
-
     const checkClipboardContent = async () => {
       const clipboardContent = await navigator.clipboard.readText() // will force prompt if permission not granted
-      if (clipboardContent && permissionGranted) {
+      if (clipboardContent) {
         pasteScores(clipboardContent)
       } else if (!clipboardContent) {
         alert("No clipboard content")
@@ -155,24 +153,4 @@ function formattClipboardContent(clipboardContent) {
   }
   return formattedArray
 }
-
-async function checkClilpboardPermission() {
-  const queryOpts = { name: "clipboard-read", allowWithoutGesture: false }
-  const permissionStatus = await navigator.permissions.query(queryOpts)
-  // Will be 'granted', 'denied' or 'prompt':
-
-  const checkPermissionState = (permissionStatus) => {
-    const state = permissionStatus.state
-    if (state == "granted") {
-      return true
-    } else if (state == "denied") {
-      return false
-    } else {
-      return false
-    }
-  }
-  const permission = checkPermissionState(permissionStatus)
-  return permission
-}
-
 fillGrades()
