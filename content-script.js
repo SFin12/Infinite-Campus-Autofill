@@ -39,7 +39,7 @@ function fillGrades() {
             // Combines the open assignment id with each student id which is used to identify the correct score input element for each student.
 
             studentIdArray.push({
-              id: "score" + openId + "_" + ics.parentElement.parentElement.parentElement.parentElement.id.split("TR")[1],
+              id: "score" + openId + "_" + ics.parentElement.parentElement.parentElement.parentElement.parentElement.id.split("TR")[1],
               points: +student.totalPoints,
             })
             break
