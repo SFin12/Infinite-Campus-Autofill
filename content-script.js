@@ -22,7 +22,14 @@ function fillGrades() {
       return
     }
     // Gets the id of the assignment that is expanded.
-    const openId = open.parentElement.parentElement.parentElement.parentElement.id.split("TD")[1]
+    // const openId = open.parentElement.parentElement.parentElement.parentElement.id.split("TD")[1]
+    const openId = open.closest("TD").id.split("TD")[1]
+
+    if(!openId){
+      alert("Assignment not found. If the assignment is expanded, try refreshing the page. If the problem persists, please contact the developer.")
+      return
+    }
+
 
     //Get an array of student
     const icStudents = gradesWrapper.document.querySelectorAll(".studentName a")
