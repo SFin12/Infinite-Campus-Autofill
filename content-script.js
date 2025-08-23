@@ -1,7 +1,12 @@
 function fillGrades() {
   // Gets nested iframe within Infinite Campus where the grades are located
-  const gradesWrapper = document.getElementById("main-workspace").contentWindow.document.getElementById("instruction-wrapper-iframe").contentWindow
-
+  let gradesWrapper = document.getElementById("main-workspace").contentWindow.document.getElementById("instruction-wrapper-iframe").contentWindow
+  if (!gradesWrapper) {
+    gradesWrapper = document.getElementById("instruction-wrapper-iframe").contentWindow
+  }
+  if (!gradesWrapper) {
+    alert("Could not find grades frame.")
+  }
   function pasteScores(gradesObjectsArrayJson) {
     let gradesArray = gradesObjectsArrayJson
 
@@ -25,11 +30,10 @@ function fillGrades() {
     // const openId = open.parentElement.parentElement.parentElement.parentElement.id.split("TD")[1]
     const openId = open.closest("TD").id.split("TD")[1]
 
-    if(!openId){
+    if (!openId) {
       alert("Assignment not found. If the assignment is expanded, try refreshing the page. If the problem persists, please contact the developer.")
       return
     }
-
 
     //Get an array of student
     const icStudents = gradesWrapper.document.querySelectorAll(".studentName a")
