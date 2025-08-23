@@ -1,3 +1,96 @@
+function similarity(s1, s2) {
+  var longer = s1
+  var shorter = s2
+  if (s1.length < s2.length) {
+    longer = s2
+    shorter = s1
+  }
+  var longerLength = longer.length
+  if (longerLength == 0) {
+    return 1.0
+  }
+  return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength)
+}
+
+function editDistance(s1, s2) {
+  s1 = s1.toLowerCase()
+  s2 = s2.toLowerCase()
+
+  var costs = new Array()
+  for (var i = 0; i <= s1.length; i++) {
+    var lastValue = i
+    for (var j = 0; j <= s2.length; j++) {
+      if (i == 0) costs[j] = j
+      else {
+        if (j > 0) {
+          var newValue = costs[j - 1]
+          if (s1.charAt(i - 1) != s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1
+          costs[j - 1] = lastValue
+          lastValue = newValue
+        }
+      }
+    }
+    if (i > 0) costs[s2.length] = lastValue
+  }
+  return costs[s2.length]
+}
+
+function createMatchStudentsFunction(icStudents, gradesWrapper, targetInput) {
+  return function matchStudents(gradesArray, columnIndex) {
+    // Extract assignment ID from the focused cell
+    const focusedCellId = targetInput.closest("td").id
+    
+    // Extract assignment ID (the number after "score")
+    const assignmentIdMatch = focusedCellId.match(/score(\d+)_/)
+    if (!assignmentIdMatch) {
+      return []
+    }
+
+    const assignmentId = assignmentIdMatch[1]
+
+    // Get the IC student id for each matching student.
+    const studentIdArray = []
+    // Go through each student object in the grades array that came from the clipboard
+    for (student of gradesArray) {
+      for (ics of icStudents) {
+        formattedIcs = ics.innerText.replace(",", "")
+
+        if (formattedIcs.toLowerCase().includes(student.student.toLowerCase()) || ics.innerText.toLowerCase().includes(student.student.toLowerCase()) || similarity(formattedIcs.toLowerCase(), student.student.toLowerCase()) > 0.75) {
+          // Find the student's row
+          const studentRow = ics.closest("tr")
+          
+          if (studentRow) {
+            // Get the student ID from the row ID (studentTR1424326_345780 -> 345780)
+            const studentRowIdMatch = studentRow.id.match(/studentTR\d+_(\d+)/)
+            if (!studentRowIdMatch) {
+              continue
+            }
+
+            const studentId = studentRowIdMatch[1]
+
+            // Construct the expected score cell ID: score{assignmentId}_1424326_{studentId}
+            const expectedScoreCellId = `score${assignmentId}_1424326_${studentId}`
+
+            // Find the cell with this ID
+            const scoreCell = gradesWrapper.document.getElementById(expectedScoreCellId)
+
+            if (scoreCell && scoreCell.id.startsWith("score")) {
+              studentIdArray.push({
+                id: scoreCell.id,
+                points: +student.totalPoints,
+              })
+              break
+            }
+          }
+          break
+        }
+      }
+    }
+
+    return studentIdArray
+  }
+}
+
 function fillGrades() {
   // Check if we're already in the gradebook iframe
   const studentNames = document.querySelectorAll(".studentName a");
@@ -18,48 +111,31 @@ function fillGrades() {
         gradesArray = JSON.parse(gradesObjectsArrayJson)
       }
       
-      // Enhanced approach: try current focus, then programmatically focus first input
+      // Enhanced approach: require manual focus
       let focusedElement = document.activeElement;
       
-      // If no score input is focused, try to focus the first one programmatically
+      // If no score input is focused, prompt user to click first
       if (!focusedElement || focusedElement.tagName !== 'INPUT' || !focusedElement.closest('td[id^="score"]')) {
-        // Find all score inputs and focus the first visible one
-        const allScoreInputs = gradesWrapper.document.querySelectorAll('td[id^="score"] input');
-        
-        if (allScoreInputs.length > 0) {
-          // Try to find a visible input
-          const visibleInputs = Array.from(allScoreInputs).filter(input => {
-            const rect = input.getBoundingClientRect();
-            return rect.width > 0 && rect.height > 0;
-          });
-          
-          if (visibleInputs.length > 0) {
-            visibleInputs[0].focus();
-            focusedElement = visibleInputs[0];
-          } else if (allScoreInputs.length > 0) {
-            // If no visible inputs, just use the first one
-            allScoreInputs[0].focus();
-            focusedElement = allScoreInputs[0];
-          }
-        }
+        alert("Please click on a score input field for the assignment you want to fill, then try again.");
+        return;
       }
       
-      let assignmentId = null;
+      let assignmentColumnIndex = null;
       let targetInput = null;
       
       // Check if we now have a focused score input
       if (focusedElement && focusedElement.tagName === 'INPUT' && focusedElement.closest('td[id^="score"]')) {
         targetInput = focusedElement;
-        const cellId = focusedElement.closest('td').id;
-        // Extract assignment ID from cell ID (format: score{assignmentId}_{sectionId}_{studentId})
-        const match = cellId.match(/^score(\d+)_/);
-        if (match) {
-          assignmentId = match[1];
-        }
+        const targetCell = focusedElement.closest('td');
+        
+        // Find the column index of this cell within its row
+        const row = targetCell.closest('tr');
+        const cells = Array.from(row.querySelectorAll('td'));
+        assignmentColumnIndex = cells.indexOf(targetCell);
       }
 
-      if (!assignmentId) {
-        alert("Could not determine which assignment to fill. No score inputs found or accessible. Make sure you're on the gradebook page with visible score inputs.");
+      if (assignmentColumnIndex === null) {
+        alert("Could not determine which assignment column to fill. Please click on a score input field first.");
         return;
       }
 
@@ -71,80 +147,12 @@ function fillGrades() {
       //Get an array of student names
       const icStudents = gradesWrapper.document.querySelectorAll(".studentName a")
 
-      function matchStudents(gradesArray, assignmentId) {
-        // Get the IC student id for each matching student.
-        const studentIdArray = []
-        // Go through each student object in the grades array that came from the clipboard
-        for (student of gradesArray) {
-          for (ics of icStudents) {
-            formattedIcs = ics.innerText.replace(",", "")
-
-            if (formattedIcs.toLowerCase().includes(student.student.toLowerCase()) || ics.innerText.toLowerCase().includes(student.student.toLowerCase()) || similarity(formattedIcs.toLowerCase(), student.student.toLowerCase()) > 0.75) {
-              // Extract student row ID from the student row structure
-              const studentRow = ics.closest('tr[id^="studentTR"]');
-              if (studentRow) {
-                // Extract the student identifier from the row ID (format: studentTR{sectionId}_{studentId})
-                const rowIdMatch = studentRow.id.match(/^studentTR(.+)$/);
-                if (rowIdMatch) {
-                  const studentRowId = rowIdMatch[1];
-                  // Construct the score cell ID using the assignment ID and student row ID
-                  const scoreCellId = `score${assignmentId}_${studentRowId}`;
-                  
-                  studentIdArray.push({
-                    id: scoreCellId,
-                    points: +student.totalPoints,
-                  })
-                  break
-                }
-              }
-            }
-          }
-        }
-
-        return studentIdArray
-      }
-
-      function similarity(s1, s2) {
-        var longer = s1
-        var shorter = s2
-        if (s1.length < s2.length) {
-          longer = s2
-          shorter = s1
-        }
-        var longerLength = longer.length
-        if (longerLength == 0) {
-          return 1.0
-        }
-        return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength)
-      }
-
-      function editDistance(s1, s2) {
-        s1 = s1.toLowerCase()
-        s2 = s2.toLowerCase()
-
-        var costs = new Array()
-        for (var i = 0; i <= s1.length; i++) {
-          var lastValue = i
-          for (var j = 0; j <= s2.length; j++) {
-            if (i == 0) costs[j] = j
-            else {
-              if (j > 0) {
-                var newValue = costs[j - 1]
-                if (s1.charAt(i - 1) != s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1
-                costs[j - 1] = lastValue
-                lastValue = newValue
-              }
-            }
-          }
-          if (i > 0) costs[s2.length] = lastValue
-        }
-        return costs[s2.length]
-      }
+      const matchStudents = createMatchStudentsFunction(icStudents, gradesWrapper, targetInput)
 
       function updateGrades() {
         const scrollView = gradesWrapper.document.querySelector("#grid")
         scrollView.scrollTo({ top: 800, behavior: "smooth" })
-        studentIdArr = matchStudents(gradesArray, assignmentId)
+        studentIdArr = matchStudents(gradesArray, assignmentColumnIndex)
 
         const sleep = (time) => {
           return new Promise((resolve) => setTimeout(resolve, time))
@@ -234,48 +242,31 @@ function fillGrades() {
       gradesArray = JSON.parse(gradesObjectsArrayJson)
     }
     
-    // Enhanced approach: try current focus, then programmatically focus first input
-    let focusedElement = document.activeElement;
+    // Enhanced approach: require manual focus
+    let focusedElement = gradesWrapper.document.activeElement;
     
-    // If no score input is focused, try to focus the first one programmatically
+    // If no score input is focused, prompt user to click first
     if (!focusedElement || focusedElement.tagName !== 'INPUT' || !focusedElement.closest('td[id^="score"]')) {
-      // Find all score inputs and focus the first visible one
-      const allScoreInputs = gradesWrapper.document.querySelectorAll('td[id^="score"] input');
-      
-      if (allScoreInputs.length > 0) {
-        // Try to find a visible input
-        const visibleInputs = Array.from(allScoreInputs).filter(input => {
-          const rect = input.getBoundingClientRect();
-          return rect.width > 0 && rect.height > 0;
-        });
-        
-        if (visibleInputs.length > 0) {
-          visibleInputs[0].focus();
-          focusedElement = visibleInputs[0];
-        } else if (allScoreInputs.length > 0) {
-          // If no visible inputs, just use the first one
-          allScoreInputs[0].focus();
-          focusedElement = allScoreInputs[0];
-        }
-      }
+      alert("Please click on a score input field for the assignment you want to fill, then try again.");
+      return;
     }
     
-    let assignmentId = null;
+    let assignmentColumnIndex = null;
     let targetInput = null;
     
     // Check if we now have a focused score input
     if (focusedElement && focusedElement.tagName === 'INPUT' && focusedElement.closest('td[id^="score"]')) {
       targetInput = focusedElement;
-      const cellId = focusedElement.closest('td').id;
-      // Extract assignment ID from cell ID (format: score{assignmentId}_{sectionId}_{studentId})
-      const match = cellId.match(/^score(\d+)_/);
-      if (match) {
-        assignmentId = match[1];
-      }
+      const targetCell = focusedElement.closest('td');
+      
+      // Find the column index of this cell within its row
+      const row = targetCell.closest('tr');
+      const cells = Array.from(row.querySelectorAll('td'));
+      assignmentColumnIndex = cells.indexOf(targetCell);
     }
 
-    if (!assignmentId) {
-      alert("Could not determine which assignment to fill. No score inputs found or accessible. Make sure you're on the gradebook page with visible score inputs.");
+    if (assignmentColumnIndex === null) {
+      alert("Could not determine which assignment column to fill. Please click on a score input field first.");
       return;
     }
 
@@ -287,80 +278,12 @@ function fillGrades() {
     //Get an array of student names
     const icStudents = gradesWrapper.document.querySelectorAll(".studentName a")
 
-    function matchStudents(gradesArray, assignmentId) {
-      // Get the IC student id for each matching student.
-      const studentIdArray = []
-      // Go through each student object in the grades array that came from the clipboard
-      for (student of gradesArray) {
-        for (ics of icStudents) {
-          formattedIcs = ics.innerText.replace(",", "")
-
-          if (formattedIcs.toLowerCase().includes(student.student.toLowerCase()) || ics.innerText.toLowerCase().includes(student.student.toLowerCase()) || similarity(formattedIcs.toLowerCase(), student.student.toLowerCase()) > 0.75) {
-            // Extract student row ID from the student row structure
-            const studentRow = ics.closest('tr[id^="studentTR"]');
-            if (studentRow) {
-              // Extract the student identifier from the row ID (format: studentTR{sectionId}_{studentId})
-              const rowIdMatch = studentRow.id.match(/^studentTR(.+)$/);
-              if (rowIdMatch) {
-                const studentRowId = rowIdMatch[1];
-                // Construct the score cell ID using the assignment ID and student row ID
-                const scoreCellId = `score${assignmentId}_${studentRowId}`;
-                
-                studentIdArray.push({
-                  id: scoreCellId,
-                  points: +student.totalPoints,
-                })
-                break
-              }
-            }
-          }
-        }
-      }
-
-      return studentIdArray
-    }
-
-    function similarity(s1, s2) {
-      var longer = s1
-      var shorter = s2
-      if (s1.length < s2.length) {
-        longer = s2
-        shorter = s1
-      }
-      var longerLength = longer.length
-      if (longerLength == 0) {
-        return 1.0
-      }
-      return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength)
-    }
-
-    function editDistance(s1, s2) {
-      s1 = s1.toLowerCase()
-      s2 = s2.toLowerCase()
-
-      var costs = new Array()
-      for (var i = 0; i <= s1.length; i++) {
-        var lastValue = i
-        for (var j = 0; j <= s2.length; j++) {
-          if (i == 0) costs[j] = j
-          else {
-            if (j > 0) {
-              var newValue = costs[j - 1]
-              if (s1.charAt(i - 1) != s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1
-              costs[j - 1] = lastValue
-              lastValue = newValue
-            }
-          }
-        }
-        if (i > 0) costs[s2.length] = lastValue
-      }
-      return costs[s2.length]
-    }
+    const matchStudents = createMatchStudentsFunction(icStudents, gradesWrapper, targetInput)
 
     function updateGrades() {
       const scrollView = gradesWrapper.document.querySelector("#grid")
       scrollView.scrollTo({ top: 800, behavior: "smooth" })
-      studentIdArr = matchStudents(gradesArray, assignmentId)
+      studentIdArr = matchStudents(gradesArray, assignmentColumnIndex)
 
       const sleep = (time) => {
         return new Promise((resolve) => setTimeout(resolve, time))
