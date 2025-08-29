@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Infinite Campus Autofill",
-  "version": "1.7",
+  "version": "1.8",
   "author": "Sean Finegan",
   "description": "Copy and paste student grades from Google Sheets, Excel, or Pages directly into Infinite Campus with a few clicks.",
   "icons": {
