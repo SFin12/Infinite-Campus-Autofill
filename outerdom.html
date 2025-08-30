@@ -1,7 +1,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>04) PRF22G-1 PE WT. TRAINING | Grade Book | Infinite Campus</title>
+    <title>Grade Book | Infinite Campus</title>
     <base href="https://sacramentocityca.infinitecampus.org/campus/sis/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- For all browsers -->
@@ -450,6 +450,37 @@
         left: 16px;
       }
     </style>
+    <style>
+      .favorites-toggle[_ngcontent-ng-c3237281965] {
+        padding: 0;
+        border-radius: 4px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .favorites-toggle[_ngcontent-ng-c3237281965]:focus {
+        box-shadow: 0 0 0 2px #fff, 0 0 0 4px #1371b9, 0 0 0 6px #fff;
+        outline: 2px solid transparent;
+      }
+      .favorites-toggle__icon[_ngcontent-ng-c3237281965] {
+        margin: 0;
+        color: #252525;
+      }
+      .favorites-toggle__icon--selected[_ngcontent-ng-c3237281965] {
+        color: #1371b9;
+      }
+    </style>
+    <style>
+      .title-bar__flags-tray-toggle[_ngcontent-ng-c3016289444]:focus {
+        box-shadow: inset 0 0 0 2px #1371b9, inset 0 0 0 4px #fff;
+      }
+      .toolbar-height[_ngcontent-ng-c3016289444] {
+        height: 54px;
+      }
+      .toolbar-min-height[_ngcontent-ng-c3016289444] {
+        min-height: 54px;
+      }
+    </style>
   </head>
   <body>
     <ic-nav-wrapper-app id="navigation-top" tabindex="-1" _nghost-ng-c3169027429="" class="ng-tns-c3169027429-0" ng-version="18.2.2"
@@ -581,7 +612,21 @@
         ><!----><router-outlet _ngcontent-ng-c3169027429="" name="secondaryRouteOutlet" class="ng-tns-c3169027429-0"></router-outlet
         ><!----><!----><ic-workspace-container _ngcontent-ng-c3169027429="" class="ng-tns-c4022342124-2 ng-tns-c3169027429-0 ng-star-inserted"
           ><main id="main-content" tabindex="-1" class="h-full w-full flex-col flex ng-tns-c4022342124-2 ng-trigger ng-trigger-workspaceSlide" style="padding-left: 0px">
-            <!---->
+            <ic-title-bar-container class="ng-tns-c4022342124-2 ng-star-inserted" style=""
+              ><!----><ic-title-bar-small _nghost-ng-c3016289444="" class="ng-tns-c3016289444-10 ng-star-inserted" style=""
+                ><div _ngcontent-ng-c3016289444="" class="toolbar-min-height box-content w-full flex-col justify-center border-b border-gray-light bg-white flex ng-tns-c3016289444-10">
+                  <div _ngcontent-ng-c3016289444="" class="items-center pl-4 flex ng-tns-c3016289444-10">
+                    <h1 _ngcontent-ng-c3016289444="" data-cy="ic-title-bar-small-header-title" class="m-0 flex-grow truncate font-medium ng-tns-c3016289444-10 ng-star-inserted">Grade Book</h1>
+                    <ic-favorites-toggle _ngcontent-ng-c3016289444="" _nghost-ng-c3237281965="" class="ng-tns-c3016289444-10 ng-star-inserted"
+                      ><button _ngcontent-ng-c3237281965="" role="checkbox" aria-label="Favorite Tool" data-cy="favorites-toggle-button" class="favorites-toggle h-7 text-2xl ml-0 mr-3 w-8" aria-checked="false">
+                        <span _ngcontent-ng-c3237281965="" aria-hidden="true" class="favorites-toggle__icon fa-star far"></span></button></ic-favorites-toggle
+                    ><!----><!----><!----><!---->
+                    <div _ngcontent-ng-c3016289444="" class="modal-overlay ng-tns-c3016289444-10"></div>
+                  </div>
+                  <!---->
+                </div></ic-title-bar-small
+              ><!----></ic-title-bar-container
+            ><!---->
             <div class="relative flex-grow overflow-y-auto flex ng-tns-c4022342124-2">
               <ic-toast class="ng-tns-c4022342124-2 ng-tns-c1174672285-3 ng-star-inserted" style=""
                 ><div class="right-5 z-[700] absolute ng-tns-c1174672285-3 top-2"><!----></div></ic-toast

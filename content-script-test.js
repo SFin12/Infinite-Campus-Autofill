@@ -45,19 +45,21 @@ function editDistance(s1, s2) {
 
 function createMatchStudentsFunction(icStudents, gradesWrapper, targetInput) {
   return function matchStudents(gradesArray, columnIndex) {
-    // Extract assignment ID from the focused cell
+    // Extract assignment ID and class ID from the focused cell
     const focusedCellId = targetInput.closest("td").id // score4266642870_1424326_345780
     console.log("REMOVE - Focused cell ID:", focusedCellId) // REMOVE
 
-    // Extract assignment ID (the number after "score")
-    const assignmentIdMatch = focusedCellId.match(/score(\d+)_/)
-    if (!assignmentIdMatch) {
-      console.log("REMOVE - Could not extract assignment ID from:", focusedCellId) // REMOVE
+    // Extract assignment ID, class ID, and student ID from the pattern: score{assignmentId}_{classId}_{studentId}
+    const idMatch = focusedCellId.match(/score(\d+)_(\d+)_(\d+)/)
+    if (!idMatch) {
+      console.log("REMOVE - Could not extract IDs from:", focusedCellId) // REMOVE
       return []
     }
 
-    const assignmentId = assignmentIdMatch[1]
+    const assignmentId = idMatch[1]
+    const classId = idMatch[2]
     console.log("REMOVE - Extracted assignment ID:", assignmentId) // REMOVE
+    console.log("REMOVE - Extracted class ID:", classId) // REMOVE
 
     // Get the IC student id for each matching student.
     const studentIdArray = []
@@ -82,8 +84,8 @@ function createMatchStudentsFunction(icStudents, gradesWrapper, targetInput) {
             const studentId = studentRowIdMatch[1]
             console.log("REMOVE - Extracted student ID:", studentId) // REMOVE
 
-            // Construct the expected score cell ID: score{assignmentId}_1424326_{studentId}
-            const expectedScoreCellId = `score${assignmentId}_1424326_${studentId}`
+            // Construct the expected score cell ID: score{assignmentId}_{classId}_{studentId}
+            const expectedScoreCellId = `score${assignmentId}_${classId}_${studentId}`
             console.log("REMOVE - Looking for score cell ID:", expectedScoreCellId) // REMOVE
 
             // Find the cell with this ID
