@@ -37,16 +37,17 @@ function editDistance(s1, s2) {
 
 function createMatchStudentsFunction(icStudents, gradesWrapper, targetInput) {
   return function matchStudents(gradesArray, columnIndex) {
-    // Extract assignment ID from the focused cell
+    // Extract assignment ID and class ID from the focused cell
     const focusedCellId = targetInput.closest("td").id
     
-    // Extract assignment ID (the number after "score")
-    const assignmentIdMatch = focusedCellId.match(/score(\d+)_/)
-    if (!assignmentIdMatch) {
+    // Extract assignment ID and class ID (score{assignmentId}_{classId}_{studentId})
+    const cellIdMatch = focusedCellId.match(/score(\d+)_(\d+)_(\d+)/)
+    if (!cellIdMatch) {
       return []
     }
 
-    const assignmentId = assignmentIdMatch[1]
+    const assignmentId = cellIdMatch[1]
+    const classId = cellIdMatch[2]
 
     // Get the IC student id for each matching student.
     const studentIdArray = []
@@ -60,7 +61,7 @@ function createMatchStudentsFunction(icStudents, gradesWrapper, targetInput) {
           const studentRow = ics.closest("tr")
           
           if (studentRow) {
-            // Get the student ID from the row ID (studentTR1424326_345780 -> 345780)
+            // Get the student ID from the row ID (studentTR{classId}_{studentId} -> studentId)
             const studentRowIdMatch = studentRow.id.match(/studentTR\d+_(\d+)/)
             if (!studentRowIdMatch) {
               continue
@@ -68,8 +69,8 @@ function createMatchStudentsFunction(icStudents, gradesWrapper, targetInput) {
 
             const studentId = studentRowIdMatch[1]
 
-            // Construct the expected score cell ID: score{assignmentId}_1424326_{studentId}
-            const expectedScoreCellId = `score${assignmentId}_1424326_${studentId}`
+            // Construct the expected score cell ID using the dynamic class ID
+            const expectedScoreCellId = `score${assignmentId}_${classId}_${studentId}`
 
             // Find the cell with this ID
             const scoreCell = gradesWrapper.document.getElementById(expectedScoreCellId)
