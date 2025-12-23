@@ -56,7 +56,7 @@ function createMatchStudentsFunction(icStudents, gradesWrapper, targetInput) {
       for (ics of icStudents) {
         formattedIcs = ics.innerText.replace(",", "")
 
-        if (formattedIcs.toLowerCase().includes(student.student.toLowerCase()) || ics.innerText.toLowerCase().includes(student.student.toLowerCase()) || similarity(formattedIcs.toLowerCase(), student.student.toLowerCase()) > 0.75) {
+        if (formattedIcs.toLowerCase().includes(student.student.toLowerCase()) || ics.innerText.toLowerCase().includes(student.student.toLowerCase()) || similarity(formattedIcs.toLowerCase(), student.student.toLowerCase()) > 0.80) {
           // Find the student's row
           const studentRow = ics.closest("tr")
           
