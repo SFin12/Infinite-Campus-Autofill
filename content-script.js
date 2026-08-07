@@ -35,6 +35,26 @@ function editDistance(s1, s2) {
   return costs[s2.length]
 }
 
+// Numbers, or IC letter codes M/X/L/I. Blank scores default to M (missing).
+function normalizeScore(rawPoints) {
+  const value = String(rawPoints ?? "").trim()
+  if (!value) {
+    return "M"
+  }
+
+  const upper = value.toUpperCase()
+  if (upper === "M" || upper === "X" || upper === "L" || upper === "I") {
+    return upper
+  }
+
+  const num = Number(value)
+  if (Number.isFinite(num)) {
+    return num
+  }
+
+  return null
+}
+
 function createMatchStudentsFunction(icStudents, gradesWrapper, targetInput) {
   return function matchStudents(gradesArray, columnIndex) {
     // Extract assignment ID and class ID from the focused cell
@@ -53,6 +73,11 @@ function createMatchStudentsFunction(icStudents, gradesWrapper, targetInput) {
     const studentIdArray = []
     // Go through each student object in the grades array that came from the clipboard
     for (student of gradesArray) {
+      // Empty names match every IC student via String.includes("") — skip them
+      if (!student.student || !String(student.student).trim()) {
+        continue
+      }
+
       for (ics of icStudents) {
         formattedIcs = ics.innerText.replace(",", "")
 
@@ -76,10 +101,13 @@ function createMatchStudentsFunction(icStudents, gradesWrapper, targetInput) {
             const scoreCell = gradesWrapper.document.getElementById(expectedScoreCellId)
 
             if (scoreCell && scoreCell.id.startsWith("score")) {
-              studentIdArray.push({
-                id: scoreCell.id,
-                points: +student.totalPoints,
-              })
+              const points = normalizeScore(student.totalPoints)
+              if (points !== null) {
+                studentIdArray.push({
+                  id: scoreCell.id,
+                  points: points,
+                })
+              }
               break
             }
           }
@@ -339,13 +367,23 @@ function fillGrades() {
 function formattClipboardContent(clipboardContent) {
   formattedArray = []
   if (clipboardContent) {
-    formatted = `${clipboardContent}`
+    // Normalize Windows CRLF / lone CR so trailing Excel rows don't become junk entries
+    formatted = `${clipboardContent}`.replace(/\r\n/g, "\n").replace(/\r/g, "\n")
     split = formatted.split("\n")
     numberSplit = split.map((student) => {
+      const line = student.trim()
+      // Skip blank trailing lines Excel often adds after a copy
+      if (!line) {
+        return
+      }
+      const index = line.indexOf("\t")
+      // Name-only rows (blank score cells often omit the trailing tab) keep empty points → M
+      const studentName = (index === -1 ? line : line.slice(0, index)).trim()
+      const number = index === -1 ? "" : line.slice(index + 1).trim()
+      if (!studentName) {
+        return
+      }
       const obj = {}
-      const index = student.indexOf("\t")
-      const number = student.slice(index + 1, student.length)
-      const studentName = student.slice(0, index).trim()
       obj.student = studentName
       obj.totalPoints = number
       formattedArray.push(obj)
